@@ -115,10 +115,10 @@ function App() {
               <div className="pt-[40px]">
                 {isNewGame ? 
                   <div className="flex flex-col items-center">
-                    <JoinRoom socket={socket} roomCode={roomCode} setRoomCode={setRoomCode} isNewGame={isNewGame} setCurrentUser={setCurrentUser} setPendingGameId={setPendingGameId} />
+                    <JoinRoom roomCode={roomCode} setRoomCode={setRoomCode} isNewGame={isNewGame} setCurrentUser={setCurrentUser} setPendingGameId={setPendingGameId} />
                   </div> :
                   <div className='flex flex-col items-center gap-[20px]'>
-                    <JoinRoom socket={socket} roomCode={roomCode} setRoomCode={setRoomCode} isNewGame={isNewGame} setCurrentUser={setCurrentUser} setPendingGameId={setPendingGameId} />
+                    <JoinRoom roomCode={roomCode} setRoomCode={setRoomCode} isNewGame={isNewGame} setCurrentUser={setCurrentUser} setPendingGameId={setPendingGameId} />
                     <div>OR</div>
                     <button
                       className='bg-light-blue rounded-md w-[200px] p-2'

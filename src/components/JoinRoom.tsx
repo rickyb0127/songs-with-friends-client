@@ -1,9 +1,7 @@
-import { Socket } from "socket.io-client";
 import { User } from "../types.ts";
 import { useState } from "react";
 
 interface JoinRoomProps {
-  socket: Socket;
   roomCode: string;
   setRoomCode: Function;
   isNewGame: boolean;
@@ -12,7 +10,6 @@ interface JoinRoomProps {
 }
 
 function JoinRoom({
-  socket,
   roomCode,
   setRoomCode,
   isNewGame,
