@@ -352,6 +352,8 @@ function GameRound({
   useEffect(() => {
     if (currentGame && playerBuzzedIn && !listening) {
       if (transcript) {
+        console.log(`your guess: ${transcript}`);
+
         socket.emit(
           "scoreGuess",
           currentGame.gameId,
