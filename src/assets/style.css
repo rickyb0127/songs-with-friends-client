@@ -26,3 +26,9 @@
   background-color: var(--cool-gray);
   opacity: 0.95;
 }
+
+.loading-container {
+  height: calc(100vh - 52px);
+  display: flex;
+  justify-content: center;
+}

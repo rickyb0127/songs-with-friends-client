@@ -8,6 +8,9 @@ import GameRound from './components/GameRound.tsx';
 
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { fas } from '@fortawesome/free-solid-svg-icons';
+import { faCircleExclamation } from '@fortawesome/free-solid-svg-icons';
+import Loading from './components/Loading.tsx';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 function App() {
   const apiUrl = import.meta.env.VITE_API_URL;
@@ -17,6 +20,8 @@ function App() {
   const [pendingGameId, setPendingGameId] = useState<string | null>(localStorage.getItem("swfPendingGameId") ? localStorage.getItem("swfPendingGameId")! : null);
   const [gameId, setGameId] = useState<string | null>(localStorage.getItem("swfGameId") ? localStorage.getItem("swfGameId")! : null);
   const [isPartOfPendingGame, setIsPartOfPendingGame] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isMicrophoneBlocked, setIsMicrophoneBlocked] = useState(false);
 
   const getRandomString = () => {
     const chars = '123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -62,12 +67,29 @@ function App() {
     }
   }, [gameId]);
 
+  const checkMicrophonePermission = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
+      stream.getTracks().forEach(function(track) {
+        track.stop();
+      });
+
+      setIsMicrophoneBlocked(false);
+    } catch(err) {
+      setIsMicrophoneBlocked(true);
+    }
+  };
+
   useEffect(() => {
     socket.connect();
+
+    checkMicrophonePermission();
   }, []);
 
   const checkPendingGameStatus = async() => {
     try {
+      setIsLoading(true);
+
       const response = await fetch(
         `${apiUrl}pending-games/${pendingGameId}/${currentUser?.id}/${roomCode}`, 
         {
@@ -88,6 +110,8 @@ function App() {
       return;
     } catch(err) {
       console.log(err)
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -104,33 +128,47 @@ function App() {
       <NavBar />
       <div className="mobile:max-w-full tablet:max-w-[800px] desktop:max-w-[800px] mx-auto">
         {
-          gameId ? 
-          <GameRound socket={socket} roomCode={roomCode} currentUser={currentUser!} setGameId={setGameId} gameId={gameId} setPendingGameId={setPendingGameId} /> :
-          <div>
-            {
-              isPartOfPendingGame ?
-              <div>
-                <WaitingRoom socket={socket} setGameId={setGameId} pendingGameId={pendingGameId} setPendingGameId={setPendingGameId} />
-              </div> :
-              <div className="pt-[40px]">
-                {isNewGame ? 
-                  <div className="flex flex-col items-center">
-                    <JoinRoom roomCode={roomCode} setRoomCode={setRoomCode} isNewGame={isNewGame} setCurrentUser={setCurrentUser} setPendingGameId={setPendingGameId} />
-                  </div> :
-                  <div className='flex flex-col items-center gap-[20px]'>
-                    <JoinRoom roomCode={roomCode} setRoomCode={setRoomCode} isNewGame={isNewGame} setCurrentUser={setCurrentUser} setPendingGameId={setPendingGameId} />
-                    <div>OR</div>
-                    <button
-                      className='bg-light-blue rounded-md w-[200px] p-2'
-                      onClick={() => createRoom()}
-                    >
-                      CREATE NEW GAME
-                    </button>
-                  </div>
-                }
+          isLoading ?
+          <Loading /> :
+          <>
+          {isMicrophoneBlocked && 
+            <div className="flex px-2 justify-center">
+              <div className="flex gap-[5px] items-center justify-center text-warning-red">
+                <FontAwesomeIcon icon={faCircleExclamation} />
+                <div>In order to participate in a game, you need to allow microphone permission.</div>
               </div>
-            }
-          </div>
+            </div>
+          }
+          {
+            gameId ? 
+            <GameRound socket={socket} roomCode={roomCode} currentUser={currentUser!} setGameId={setGameId} gameId={gameId} setPendingGameId={setPendingGameId} setIsLoading={setIsLoading} isMicrophoneBlocked={isMicrophoneBlocked} /> :
+            <div>
+              {
+                isPartOfPendingGame ?
+                <div>
+                  <WaitingRoom socket={socket} setGameId={setGameId} pendingGameId={pendingGameId} setPendingGameId={setPendingGameId} setIsLoading={setIsLoading} />
+                </div> :
+                <div className="pt-[40px]">
+                  {isNewGame ? 
+                    <div className="flex flex-col items-center">
+                      <JoinRoom roomCode={roomCode} setRoomCode={setRoomCode} isNewGame={isNewGame} setCurrentUser={setCurrentUser} setPendingGameId={setPendingGameId} setIsLoading={setIsLoading} />
+                    </div> :
+                    <div className='flex flex-col items-center gap-[20px]'>
+                      <JoinRoom roomCode={roomCode} setRoomCode={setRoomCode} isNewGame={isNewGame} setCurrentUser={setCurrentUser} setPendingGameId={setPendingGameId} setIsLoading={setIsLoading} />
+                      <div>OR</div>
+                      <button
+                        className='bg-light-blue rounded-md w-[200px] p-2'
+                        onClick={() => createRoom()}
+                      >
+                        CREATE NEW GAME
+                      </button>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+          </>
         }
       </div>
     </>

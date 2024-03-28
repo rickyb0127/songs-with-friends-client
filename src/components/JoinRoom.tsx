@@ -7,6 +7,7 @@ interface JoinRoomProps {
   isNewGame: boolean;
   setCurrentUser: Function;
   setPendingGameId: Function;
+  setIsLoading: Function;
 }
 
 function JoinRoom({
@@ -15,6 +16,7 @@ function JoinRoom({
   isNewGame,
   setCurrentUser,
   setPendingGameId,
+  setIsLoading
 }: JoinRoomProps) {
   const apiUrl = import.meta.env.VITE_API_URL;
   const [displayName, setDisplayName] = useState<string>("");
@@ -117,6 +119,8 @@ function JoinRoom({
   const joinExistingGame = async () => {
     if (validateForm() && validateRoomCode()) {
       try {
+        setIsLoading(true);
+
         const swfUser = {
           id: getRandomString(),
           displayName,
@@ -133,6 +137,8 @@ function JoinRoom({
         setRoomCode(roomCode);
       } catch (err) {
         console.log(err);
+      } finally {
+        setIsLoading(false);
       }
     }
   };
@@ -154,11 +160,11 @@ function JoinRoom({
             onChange={(e) => setRoomCode(e.target.value)}
           />
         )}
-        <label className="pl-[5px]">DISPLAY NAME</label>
+        <label className="pl-[5px]">NAME</label>
         <input
           className="text-center rounded-md w-[280px] h-[36px] border-solid border"
           type="text"
-          placeholder="Enter Display Name"
+          placeholder="Enter Your Name"
           maxLength={12}
           onChange={(e) => setDisplayName(e.target.value)}
         />

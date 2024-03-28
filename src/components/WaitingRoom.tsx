@@ -7,6 +7,7 @@ interface WaitingRoomProps {
   setGameId: Function;
   pendingGameId: string | null;
   setPendingGameId: Function;
+  setIsLoading: Function;
 }
 
 function WaitingRoom({
@@ -14,6 +15,7 @@ function WaitingRoom({
   setGameId,
   pendingGameId,
   setPendingGameId,
+  setIsLoading
 }: WaitingRoomProps) {
   const apiUrl = import.meta.env.VITE_API_URL;
   const availablePlaylistCategoriesString = import.meta.env.VITE_AVAILABLE_PLAYLIST_CATEGORIES;
@@ -150,8 +152,16 @@ function WaitingRoom({
 
   const startGame = async () => {
     if (validateForm()) {
-      initializeNewGame();
-      deletePendingGame();
+      try {
+        setIsLoading(true);
+
+        await initializeNewGame();
+        await deletePendingGame();
+      } catch(err) {
+        console.log(err);
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 

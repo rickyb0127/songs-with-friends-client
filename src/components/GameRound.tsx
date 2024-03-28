@@ -17,6 +17,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faQuestionCircle } from "@fortawesome/free-solid-svg-icons";
 import { faX } from "@fortawesome/free-solid-svg-icons";
 import { faCheck } from "@fortawesome/free-solid-svg-icons";
+import Loading from "./Loading.tsx";
 
 interface GameRoundProps {
   socket: Socket;
@@ -25,6 +26,8 @@ interface GameRoundProps {
   setGameId: Function;
   gameId: string;
   setPendingGameId: Function;
+  setIsLoading: Function;
+  isMicrophoneBlocked: boolean;
 }
 
 function GameRound({
@@ -34,6 +37,8 @@ function GameRound({
   setGameId,
   gameId,
   setPendingGameId,
+  setIsLoading,
+  isMicrophoneBlocked
 }: GameRoundProps) {
   const apiUrl = import.meta.env.VITE_API_URL;
   const [playerBuzzedIn, setPlayerBuzzedIn] = useState<User | null>(null);
@@ -58,6 +63,7 @@ function GameRound({
     null
   );
   const [resultsString, setResultsString] = useState("");
+  const [isButtonDisabled, setIsButtonDisabled] = useState(false);
 
   const fetchGameById = async (id: string) => {
     try {
@@ -102,6 +108,8 @@ function GameRound({
         } else {
           setIncorrectUserGuess(player);
         }
+
+        setIsButtonDisabled(false);
       }
     );
 
@@ -365,19 +373,28 @@ function GameRound({
     }
   }, [currentGame, transcript, playerBuzzedIn, listening]);
 
-  const startRound = () => {
+  const startRound = async() => {
     if (currentGame) {
-      socket.emit(
-        "clientUpdatedRoundStatus",
-        currentGame.gameId,
-        currentGame.roomCode,
-        RoundStatus.STARTED
-      );
+      try {
+        setIsLoading(true);
+
+        await socket.emit(
+          "clientUpdatedRoundStatus",
+          currentGame.gameId,
+          currentGame.roomCode,
+          RoundStatus.STARTED
+        );
+      } catch(err) {
+        console.log(err)
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
   const buzzIn = () => {
     if (currentGame) {
+      setIsButtonDisabled(true);
       socket.emit(
         "playerBuzzedIn",
         currentGame.gameId,
@@ -398,9 +415,17 @@ function GameRound({
     }
   };
 
-  const advanceRound = () => {
+  const advanceRound = async() => {
     if (currentGame) {
-      socket.emit("clientAdvancedRound", currentGame.gameId, roomCode);
+      try {
+        setIsLoading(true);
+
+        await socket.emit("clientAdvancedRound", currentGame.gameId, roomCode);
+      } catch(err) {
+        console.log(err);
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -614,11 +639,12 @@ function GameRound({
                     </button>
                   )}
 
-                {(roundStatus === RoundStatus.STARTED ||
+                {!isMicrophoneBlocked && (roundStatus === RoundStatus.STARTED ||
                   roundStatus === RoundStatus.RESUMED) && (
                   <button
-                    className="bg-light-blue rounded-md p-2"
+                    className="disabled:bg-cool-gray bg-light-blue rounded-md p-2"
                     onClick={() => buzzIn()}
+                    disabled={isButtonDisabled}
                   >
                     BUZZ IN
                   </button>
@@ -639,7 +665,7 @@ function GameRound({
           </div>
         </div>
       ) : (
-        <div>game not ready</div>
+        <Loading />
       )}
     </div>
   );
